@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/io.rdfs.iml" filepath="$PROJECT_DIR$/.idea/modules/io.rdfs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/io.rdfs_main.iml" filepath="$PROJECT_DIR$/.idea/modules/io.rdfs_main.iml" group="io.rdfs" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/io.rdfs_test.iml" filepath="$PROJECT_DIR$/.idea/modules/io.rdfs_test.iml" group="io.rdfs" />
+    </modules>
+  </component>
+</project>
