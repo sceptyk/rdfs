@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<FileSystem>
+  <File>
+    <Name>File 1</Name>
+    <Status>Status 1</Status>
+    <Path>Path 1</Path>
+    <Owner>Owner 1</Owner>
+  </File>
+  <File>
+    <Name>File 1</Name>
+    <Status>Status 2</Status>
+    <Path>Path 2</Path>
+    <Owner>Owner 2</Owner>
+  </File>
+  <File>
+    <Name>File 3</Name>
+    <Status>Status 3</Status>
+    <Path>Path 3</Path>
+    <Owner>Owner 3</Owner>
+  </File>
+</FileSystem>
