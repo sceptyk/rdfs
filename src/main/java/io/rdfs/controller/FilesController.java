@@ -1,7 +1,9 @@
 package io.rdfs.controller;
 
 import io.rdfs.helper.DataHelper;
+import io.rdfs.helper.EtherHelper;
 import io.rdfs.model.File;
+import io.rdfs.model.Offer;
 import io.rdfs.view.FileListCell;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,6 +13,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
 
+import java.awt.event.ActionEvent;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -35,5 +38,12 @@ public class FilesController implements Initializable {
 
         filesList.setItems(observableList);
         filesList.setCellFactory(param -> new FileListCell());
+    }
+
+    @FXML
+    public void onAddFile(ActionEvent event){
+        EtherHelper etherHelper = EtherHelper.getInstance();
+        Offer offer = new Offer();
+        etherHelper.publishOffer();
     }
 }

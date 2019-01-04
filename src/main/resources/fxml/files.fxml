@@ -18,7 +18,7 @@
             <bottom>
                 <HBox alignment="CENTER_RIGHT" prefWidth="600.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Button mnemonicParsing="false" text="Add file" />
+                        <Button mnemonicParsing="false" onAction="#onAddFile" text="Add file" />
                     </children>
                     <opaqueInsets>
                         <Insets />

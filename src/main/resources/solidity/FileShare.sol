@@ -1,6 +1,6 @@
 pragma solidity >=0.4.22 <0.6.0;
 
-contract Killable {
+contract KillableContract {
     address owner;
 
     constructor() public {
@@ -14,7 +14,7 @@ contract Killable {
     }
 }
 
-contract Offer is Killable {
+contract OfferContract is KillableContract {
     event OwnerChanged(
         address newOwner,
         address file
@@ -27,14 +27,14 @@ contract Offer is Killable {
     }
 
     function accept() public returns(bytes memory) {
-        address file = address(new File(owner, msg.sender));
+        address file = address(new FileContract(owner, msg.sender));
         emit OwnerChanged(msg.sender, file);
         selfdestruct(msg.sender);
         return fileChunk;
     }
 }
 
-contract File is Killable{
+contract FileContract is KillableContract{
     event NewRequest(address owner);
 
     address provider;
@@ -54,7 +54,7 @@ contract File is Killable{
     }
 }
 
-contract Response{
+contract ResponseContract{
     bytes fileChunk;
 
     constructor(bytes memory _fileChunk) public{
