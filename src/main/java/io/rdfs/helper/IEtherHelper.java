@@ -8,8 +8,7 @@ import java.io.IOException;
 
 public interface IEtherHelper {
 
-    void publishOffer(Offer offer) throws Exception;
-    void handleResponse(Offer offer);
-    void acceptOffer(Offer offer, File file);
+    void publishOffer(File file) throws Exception;
+    void subscribeToOffers();
     void requestFile(File file);
 }

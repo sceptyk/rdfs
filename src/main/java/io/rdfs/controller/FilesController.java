@@ -2,18 +2,19 @@ package io.rdfs.controller;
 
 import io.rdfs.helper.DataHelper;
 import io.rdfs.helper.EtherHelper;
+import io.rdfs.helper.FileHelper;
 import io.rdfs.model.File;
 import io.rdfs.model.Offer;
 import io.rdfs.view.FileListCell;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
 
-import java.awt.event.ActionEvent;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -41,9 +42,20 @@ public class FilesController implements Initializable {
     }
 
     @FXML
-    public void onAddFile(ActionEvent event){
+    public void handleAddFile(ActionEvent actionEvent) {
         EtherHelper etherHelper = EtherHelper.getInstance();
-        Offer offer = new Offer();
-        etherHelper.publishOffer();
+        File file = new File();
+
+        try {
+            etherHelper.publishOffer(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleConnect(ActionEvent actionEvent) {
+        EtherHelper etherHelper = EtherHelper.getInstance();
+        etherHelper.subscribeToOffers();
     }
 }
