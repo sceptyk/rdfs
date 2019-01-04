@@ -14,7 +14,7 @@ public class FileListCell extends ListCell<File> {
     private Parent root;
 
     public FileListCell() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/../resources/view/file.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/file.fxml"));
         try {
             root = loader.load();
             controller = (FileController) loader.getController();

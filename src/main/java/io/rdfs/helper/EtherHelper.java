@@ -2,6 +2,8 @@ package io.rdfs.helper;
 
 import io.rdfs.model.File;
 import io.rdfs.model.Offer;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
 
 public class EtherHelper implements IEtherHelper {
 
@@ -29,7 +31,11 @@ public class EtherHelper implements IEtherHelper {
 
     @Override
     public void acceptOffer(Offer offer, File file) {
+        Web3j web3 = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/af915edd6aaa4870ab66d2aefba076c7"));
+        web3.web3ClientVersion().flowable().subscribe(x -> {
+            String clientVersion = x.getWeb3ClientVersion();
 
+        });
     }
 
     @Override
