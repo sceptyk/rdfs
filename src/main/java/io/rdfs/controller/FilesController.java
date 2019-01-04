@@ -11,6 +11,8 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
@@ -20,6 +22,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class FilesController implements Initializable {
+
+    @FXML
+    private Button connectButton;
+
+    @FXML
+    private CheckBox acceptFilesCheckBox;
 
     @FXML
     private ListView<File> filesList;
@@ -56,6 +64,11 @@ public class FilesController implements Initializable {
     @FXML
     public void handleConnect(ActionEvent actionEvent) {
         EtherHelper etherHelper = EtherHelper.getInstance();
-        etherHelper.subscribeToOffers();
+        etherHelper.connect();
+    }
+
+    public void handleAcceptFiles(ActionEvent actionEvent) {
+        EtherHelper etherHelper = EtherHelper.getInstance();
+        acceptFilesCheckBox.setSelected(etherHelper.switchFileSubscription());
     }
 }

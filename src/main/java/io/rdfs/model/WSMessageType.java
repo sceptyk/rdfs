@@ -1,5 +1,5 @@
 package io.rdfs.model;
 
 public enum WSMessageType {
-    NEW_FILE
+    ACCEPTED, NEW_FILE
 }

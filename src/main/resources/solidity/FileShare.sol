@@ -26,11 +26,11 @@ contract OfferContract is KillableContract {
         fileChunk = _fileChunk;
     }
 
-    function accept() public returns(bytes memory) {
-        address file = address(new FileContract(owner, msg.sender));
+    function accept() public returns(bytes memory _fileChunk, address file) {
+        _fileChunk = fileChunk;
+        file = address(new FileContract(owner, msg.sender));
         emit OwnerChanged(msg.sender, file);
         selfdestruct(msg.sender);
-        return fileChunk;
     }
 }
 

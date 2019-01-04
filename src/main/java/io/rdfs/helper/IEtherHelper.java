@@ -1,14 +1,10 @@
 package io.rdfs.helper;
 
 import io.rdfs.model.File;
-import io.rdfs.model.Offer;
-import org.web3j.crypto.CipherException;
-
-import java.io.IOException;
 
 public interface IEtherHelper {
-
+    void connect();
     void publishOffer(File file) throws Exception;
-    void subscribeToOffers();
+    boolean switchFileSubscription();
     void requestFile(File file);
 }

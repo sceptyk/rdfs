@@ -9,6 +9,8 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 
@@ -23,8 +25,10 @@ public class EtherHelper implements IEtherHelper {
     private Web3j web3j;
     private WebSocketClient ws;
     private Credentials credentials;
+    private String address = "001be8b0a3c6a011a07e1ab75401d0d7900d954e";
 
     private Gson gson = new Gson();
+    private boolean acceptsFiles;
 
     private EtherHelper() throws IOException, CipherException, URISyntaxException {
         web3j = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/af915edd6aaa4870ab66d2aefba076c7"));
@@ -53,6 +57,11 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
+    public void connect() {
+        ws.connect();
+    }
+
+    @Override
     public void publishOffer(File file) throws Exception {
 
         FileHelper fileHelper = FileHelper.getInstance();
@@ -68,6 +77,7 @@ public class EtherHelper implements IEtherHelper {
                     )
                     .send();
 
+            offer.owner = address;
             offer.contract = offerContract.getContractAddress();
             ws.send(WSObject.createMessage(new WSMessage(WSMessageType.NEW_FILE, offer)));
 
@@ -79,8 +89,8 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void subscribeToOffers() {
-        ws.connect();
+    public boolean switchFileSubscription() {
+        return acceptsFiles = !acceptsFiles;
     }
 
     @Override
@@ -101,16 +111,30 @@ public class EtherHelper implements IEtherHelper {
 
         @Override
         public void onMessage(String message) {
+
+            System.out.println(message);
+
             if(message == "{\"auth\":\"ok\"}"){
                 //TODO allow sending
             } else{
                 WSObject wsObject = gson.fromJson(message, WSObject.class);
+                if(wsObject.message == null) return;
 
                 if(wsObject.message.type == WSMessageType.NEW_FILE){
+                    if(acceptsFiles) {
+                        Offer offer = (Offer) wsObject.message.getContent(Offer.class);
 
+                        OfferContract offerContract = OfferContract.load(offer.contract, web3j, credentials, new DefaultGasProvider());
+                        RemoteCall<TransactionReceipt> response = offerContract.accept();
+                        System.out.println(gson.toJson(response));
+
+                        offer.responder = address;
+                        ws.send(WSObject.createMessage(new WSMessage(WSMessageType.ACCEPTED, offer)));
+                    }
+                } else if(wsObject.message.type == WSMessageType.ACCEPTED){
+                    //TODO update offer
                 }
             }
-            System.out.println(message);
         }
 
         @Override
