@@ -3,7 +3,7 @@ package io.rdfs.model;
 import java.io.Serializable;
 import java.util.List;
 
-public class File implements Serializable {
+public class DistributedFile implements Serializable {
     public String name;
     public String status;
     public String path;

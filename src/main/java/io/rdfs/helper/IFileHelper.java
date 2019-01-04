@@ -1,7 +1,7 @@
 package io.rdfs.helper;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 
 public interface IFileHelper {
-    void splitFile(File file);
+    void splitFile(DistributedFile file);
 }

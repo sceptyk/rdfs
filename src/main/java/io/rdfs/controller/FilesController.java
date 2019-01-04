@@ -1,24 +1,25 @@
 package io.rdfs.controller;
 
 import io.rdfs.helper.DataHelper;
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 import io.rdfs.view.FileListCell;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.util.Callback;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class FilesController implements Initializable {
 
     @FXML
-    private ListView<File> filesList;
+    private ListView<DistributedFile> filesList;
+
+    //private List<DistributedFile> files = new ArrayList<>();
 
     private ObservableList observableList = FXCollections.observableArrayList();
 
@@ -29,11 +30,13 @@ public class FilesController implements Initializable {
 
     private void setListView() {
         DataHelper dataHelper = DataHelper.getInstance();
-        List<File> files = dataHelper.getAllFiles();
+        List<DistributedFile> distributedFiles = dataHelper.getAllFiles();
         observableList.clear();
-        observableList.addAll(files);
+        observableList.addAll(distributedFiles);
+        //dataHelper.updateAllFiles(files);
 
         filesList.setItems(observableList);
         filesList.setCellFactory(param -> new FileListCell());
     }
+
 }

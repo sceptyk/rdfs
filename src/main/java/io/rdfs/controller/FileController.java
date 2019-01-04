@@ -1,10 +1,9 @@
 package io.rdfs.controller;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.text.Text;
 
 public class FileController {
 
@@ -20,7 +19,7 @@ public class FileController {
     @FXML
     private Label statusLabel;
 
-    public void setData(File info) {
+    public void setData(DistributedFile info) {
         nameLabel.setText(info.name);
         statusLabel.setText(info.status);
     }

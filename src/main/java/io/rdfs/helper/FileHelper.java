@@ -1,6 +1,6 @@
 package io.rdfs.helper;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 
 public class FileHelper implements IFileHelper {
 
@@ -17,7 +17,7 @@ public class FileHelper implements IFileHelper {
     }
 
     @Override
-    public void splitFile(File file) {
+    public void splitFile(DistributedFile file) {
 
     }
 }

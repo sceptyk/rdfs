@@ -1,6 +1,6 @@
 package io.rdfs.helper;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 import io.rdfs.model.Offer;
 
 public class EtherHelper implements IEtherHelper {
@@ -28,12 +28,12 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void acceptOffer(Offer offer, File file) {
+    public void acceptOffer(Offer offer, DistributedFile file) {
 
     }
 
     @Override
-    public void requestFile(File file) {
+    public void requestFile(DistributedFile file) {
 
     }
 }
