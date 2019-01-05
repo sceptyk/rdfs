@@ -1,6 +1,6 @@
 package io.rdfs.controller;
 
-import io.rdfs.helper.DataHelper;
+import helper.DataHelper;
 import io.rdfs.model.DistributedFile;
 import io.rdfs.view.FileListCell;
 import javafx.collections.FXCollections;
@@ -10,7 +10,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 

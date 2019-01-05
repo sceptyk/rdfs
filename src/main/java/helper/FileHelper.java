@@ -1,4 +1,4 @@
-package io.rdfs.helper;
+package helper;
 
 import io.rdfs.model.DistributedFile;
 

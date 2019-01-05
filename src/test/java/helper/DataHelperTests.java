@@ -1,19 +1,25 @@
-package io.rdfs.Tests;
-import io.rdfs.helper.DataHelper;
+package helper;
 import io.rdfs.model.DistributedFile;
-import junit.framework.JUnit4TestAdapter;
-import junit.framework.TestCase;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class fileTests extends TestCase {
+import static junit.framework.TestCase.assertEquals;
+
+public class DataHelperTests {
+
+    private DataHelper dataHelper;
+
+    @Before
+    public void setUp(){
+        String path = DataHelperTests.class.getResource("/../resources/store/fileStorage.xml").getPath();
+        dataHelper = DataHelper.getInstance(path);
+    }
 
     @Test
     public void testUpdateAllFilesAndGetAllFiles(){
-        DataHelper data = new DataHelper();
         List<DistributedFile> files = new ArrayList<>();
 
         DistributedFile file1 = new DistributedFile();
@@ -38,15 +44,14 @@ public class fileTests extends TestCase {
         files.add(file2);
         files.add(file3);
 
-        data.updateAllFiles(files);
-        assertEquals(data.getAllFiles().get(0).name, "File 1");
-        assertEquals(data.getAllFiles().get(1).status, "Status 2");
-        assertEquals(data.getAllFiles().get(2).owner, "Owner 3");
+        dataHelper.updateAllFiles(files);
+        assertEquals(dataHelper.getAllFiles().get(0).name, "File 1");
+        assertEquals(dataHelper.getAllFiles().get(1).status, "Status 2");
+        assertEquals(dataHelper.getAllFiles().get(2).owner, "Owner 3");
     }
 
     @Test
     public void testUpdateFile(){
-        DataHelper data = new DataHelper();
         List<DistributedFile> files = new ArrayList<>();
 
         DistributedFile file1 = new DistributedFile();
@@ -62,14 +67,16 @@ public class fileTests extends TestCase {
         file2.path = "Path 2";
 
         files.add(file1);
-        data.updateAllFiles(files);
+        dataHelper.updateAllFiles(files);
 
-        data.updateFile(file2);
+        dataHelper.updateFile(file2);
 
-        assertEquals(data.getAllFiles().get(0).name,"File 1");
-        assertEquals(data.getAllFiles().get(0).owner,"Owner 2");
-        assertEquals(data.getAllFiles().get(0).status,"Status 2");
-        assertEquals(data.getAllFiles().get(0).path,"Path 2");
+        files = dataHelper.getAllFiles();
+
+        assertEquals(files.get(0).name,"File 1");
+        assertEquals(files.get(0).owner,"Owner 2");
+        assertEquals(files.get(0).status,"Status 2");
+        assertEquals(files.get(0).path,"Path 2");
     }
 
 
