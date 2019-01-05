@@ -4,6 +4,7 @@ import java.io.File;
 
 import io.rdfs.model.DistributedFile;
 import io.rdfs.model.Settings;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -19,6 +20,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class DataHelper implements IDataHelper {
@@ -27,9 +29,11 @@ public class DataHelper implements IDataHelper {
     private DocumentBuilder documentBuilder;
 
     private String storageFilePath;
+    private String storageSettingPath;
 
-    private DataHelper() {
+    public DataHelper() {
         this.storageFilePath = storageFilePath;
+        this.storageSettingPath = storageSettingPath;
         DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
 
         try {
@@ -40,21 +44,36 @@ public class DataHelper implements IDataHelper {
     }
 
     public static DataHelper getInstance() {
-        return getInstance(DataHelper.class.getResource("/../resources/store/fileStorage.xml").toString());
+        return getInstance(DataHelper.class.getResource("/../resources/store").getPath(), DataHelper.class.getResource("/../resources/store").getPath());
     }
 
-    public static DataHelper getInstance(String storageFilePath) {
+    private static DataHelper getInstance(String storageFilePath, String storageSettingPath) {
         if (instance == null) {
             instance = new DataHelper();
         }
 
-        instance.setStoragePath(storageFilePath);
+        instance.setStoragePath(storageFilePath+"/fileStorage.xml");
+        instance.setSettingPath(storageSettingPath+"/settingStorage.xml");
 
         return instance;
     }
 
     public void setStoragePath(String storagePath) {
         this.storageFilePath = storagePath;
+    }
+
+    public void setSettingPath(String settingPath){this.storageSettingPath = settingPath; }
+
+    public void checkStoreFile(File storeFile){
+        try {
+            if (storeFile.exists())
+                storeFile.delete();
+            else
+                storeFile.getParentFile().mkdirs();
+            storeFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -157,15 +176,7 @@ public class DataHelper implements IDataHelper {
             DOMSource domSource = new DOMSource(document);
             File storeFile = new File(storageFilePath);
 
-            try {
-                if (storeFile.exists())
-                    storeFile.delete();
-                else
-                    storeFile.getParentFile().mkdirs();
-                storeFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            checkStoreFile(storeFile);
 
             StreamResult streamResult = new StreamResult(storeFile);
             transformer.transform(domSource, streamResult);
@@ -179,11 +190,68 @@ public class DataHelper implements IDataHelper {
 
     @Override
     public Settings getSettings() {
-        return null;
+        Settings settings = new Settings();
+        try {
+            File storageFile = new File(storageSettingPath);
+            Document document = documentBuilder.parse(storageFile);
+            int totalNumberOfSettings = document.getElementsByTagName("Setting").getLength();
+
+            for (int i = 0; i < totalNumberOfSettings; i++) {
+                String key = document.getElementsByTagName("Setting").item(i).getAttributes().getNamedItem("key").getNodeValue();
+                String value = document.getElementsByTagName("Setting").item(i).getTextContent();
+                settings.put(key, value);
+            }
+
+        }catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return settings;
     }
 
     @Override
     public void updateSettings(Settings config) {
 
+        try {
+        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = document.createElement("Settings");
+        document.appendChild(root);
+
+        for(HashMap.Entry<String, String> entry : config.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            Element setting = document.createElement("Setting");
+            root.appendChild(setting);
+
+            Attr settingKey = document.createAttribute("Key");
+            settingKey.setValue(key);
+            setting.setAttributeNode(settingKey);
+            setting.appendChild(document.createTextNode(value));
+        }
+
+            // Create the xml file and transform the DOM Object to an XML File
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+
+            // Indenting output
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            DOMSource domSource = new DOMSource(document);
+            File storeFile = new File(storageSettingPath);
+
+            checkStoreFile(storeFile);
+
+            StreamResult streamResult = new StreamResult(storeFile);
+            transformer.transform(domSource, streamResult);
+
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }catch (TransformerException tfe) {
+            tfe.printStackTrace();
+        }
     }
 }
