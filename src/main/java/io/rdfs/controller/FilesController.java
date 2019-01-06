@@ -25,6 +25,7 @@ public class FilesController implements Initializable {
 
     @FXML
     private Button connectButton;
+    private boolean connected;
 
     @FXML
     private CheckBox acceptFilesCheckBox;
@@ -64,11 +65,22 @@ public class FilesController implements Initializable {
     @FXML
     public void handleConnect(ActionEvent actionEvent) {
         EtherHelper etherHelper = EtherHelper.getInstance();
-        etherHelper.connect();
+
+        if(connected){
+            etherHelper.disconnect();
+            connectButton.setText("Connect");
+        }else{
+            etherHelper.connect();
+            connectButton.setText("Disconnect");
+        }
     }
 
     public void handleAcceptFiles(ActionEvent actionEvent) {
         EtherHelper etherHelper = EtherHelper.getInstance();
-        acceptFilesCheckBox.setSelected(etherHelper.switchFileSubscription());
+        if(!acceptFilesCheckBox.isSelected()){
+            etherHelper.unsubscribeToOffers();
+        } else {
+            etherHelper.subscribeToOffers();
+        }
     }
 }

@@ -1,23 +1,31 @@
 package io.rdfs.helper;
 
 import com.google.gson.Gson;
+import io.rdfs.contract.FileChunkContract;
 import io.rdfs.contract.OfferContract;
 import io.rdfs.model.*;
+import io.reactivex.subscribers.SafeSubscriber;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EtherHelper implements IEtherHelper {
 
@@ -31,9 +39,7 @@ public class EtherHelper implements IEtherHelper {
     private boolean acceptsFiles;
 
     private EtherHelper() throws IOException, CipherException, URISyntaxException {
-        web3j = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/af915edd6aaa4870ab66d2aefba076c7"));
-
-        ws = new WebSocketClientImpl(new URI("ws://achex.ca:4010"));
+        web3j = Web3j.build(new HttpService("http://127.0.0.1:8545"));
 
         credentials = WalletUtils.loadCredentials(
                 "distributedsystems",
@@ -58,28 +64,56 @@ public class EtherHelper implements IEtherHelper {
 
     @Override
     public void connect() {
-        ws.connect();
+        try {
+            ws = new WebSocketClientImpl(new URI("ws://achex.ca:4010"));
+            ws.connect();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void disconnect() {
+        ws.close();
     }
 
     @Override
     public void publishOffer(File file) throws Exception {
 
         FileHelper fileHelper = FileHelper.getInstance();
-        List<Offer> offers = fileHelper.splitFile(file);
+        List<byte[]> chunks = fileHelper.splitFile(file);
 
-        for (Offer offer : offers) {
+        for (int i=0;i<chunks.size();i++) {
+            byte[] chunk = chunks.get(i);
             OfferContract offerContract = OfferContract
                     .deploy(
                             web3j,
                             credentials,
                             new DefaultGasProvider(),
-                            offer.chunk
+                            chunk
                     )
                     .send();
 
-            offer.owner = address;
-            offer.contract = offerContract.getContractAddress();
-            ws.send(WSObject.createMessage(new WSMessage(WSMessageType.NEW_FILE, offer)));
+            ws.send(WSObject.createMessage(new WSMessage(WSMessageType.NEW_FILE, offerContract.getContractAddress())));
+
+            int finalI = i;
+            offerContract.offerAcceptedEventFlowable(new EthFilter()).safeSubscribe(new Subscriber<OfferContract.OfferAcceptedEventResponse>() {
+                @Override
+                public void onSubscribe(Subscription s) {}
+
+                @Override
+                public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
+                    file.chunks.add(finalI, offerAcceptedEventResponse.file);
+                    DataHelper dataHelper = DataHelper.getInstance();
+                    dataHelper.updateFile(file);
+                }
+
+                @Override
+                public void onError(Throwable t) {}
+
+                @Override
+                public void onComplete() {}
+            });
 
             DataHelper dataHelper = DataHelper.getInstance();
             dataHelper.updateFile(file);
@@ -89,13 +123,42 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public boolean switchFileSubscription() {
-        return acceptsFiles = !acceptsFiles;
+    public void subscribeToOffers() {
+        acceptsFiles = true;
+    }
+
+    @Override
+    public void unsubscribeToOffers() {
+        acceptsFiles = false;
     }
 
     @Override
     public void requestFile(File file) {
+        List<byte[]> fileChunks = new ArrayList<>();
+        for (int i = 0; i < file.chunks.size(); i++) {
+            String chunkContractAddress = file.chunks.get(i);
+            FileChunkContract fileChunkContract =
+                    FileChunkContract.load(chunkContractAddress, web3j, credentials, new DefaultGasProvider());
+            fileChunkContract.request();
+            FileChunkContract.DownloadResponseEventResponse downloadResponseEventResponse =
+                    fileChunkContract.getDownloadResponseEvents(fileChunkContract.getTransactionReceipt().get()).get(0);
+            fileChunks.add(i, downloadResponseEventResponse.fileChunk);
+        }
 
+        FileHelper fileHelper = FileHelper.getInstance();
+        fileHelper.glueFile(fileChunks);
+    }
+
+    @Override
+    public void deleteFile(File file) {
+        for (String chunkContractAddress : file.chunks) {
+            FileChunkContract fileChunkContract =
+                    FileChunkContract.load(chunkContractAddress, web3j, credentials, new DefaultGasProvider());
+            fileChunkContract.cancel();
+        }
+
+        DataHelper dataHelper = DataHelper.getInstance();
+        dataHelper.removeFile(file);
     }
 
     private class WebSocketClientImpl extends WebSocketClient {
@@ -114,25 +177,56 @@ public class EtherHelper implements IEtherHelper {
 
             System.out.println(message);
 
-            if(message == "{\"auth\":\"ok\"}"){
+            if (message == "{\"auth\":\"ok\"}") {
                 //TODO allow sending
-            } else{
+            } else {
                 WSObject wsObject = gson.fromJson(message, WSObject.class);
-                if(wsObject.message == null) return;
+                if (wsObject.message == null) return;
 
-                if(wsObject.message.type == WSMessageType.NEW_FILE){
-                    if(acceptsFiles) {
+                if (wsObject.message.type == WSMessageType.NEW_FILE) {
+                    if (acceptsFiles) {
                         Offer offer = (Offer) wsObject.message.getContent(Offer.class);
 
                         OfferContract offerContract = OfferContract.load(offer.contract, web3j, credentials, new DefaultGasProvider());
-                        RemoteCall<TransactionReceipt> response = offerContract.accept();
-                        System.out.println(gson.toJson(response));
+                        offerContract.accept();
 
-                        offer.responder = address;
-                        ws.send(WSObject.createMessage(new WSMessage(WSMessageType.ACCEPTED, offer)));
+                        DataHelper dataHelper = DataHelper.getInstance();
+                        List<File> files = dataHelper.getAllFiles();
+
+                        OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse = offerContract.getOfferAcceptedEvents(offerContract.getTransactionReceipt().get()).get(0);
+
+                        File newFile = new File();
+                        newFile.status = File.Status.COLLECTABLE;
+                        newFile.contract = offerAcceptedEventResponse.file;
+
+                        files.add(newFile);
+
+                        FileChunkContract fileChunkContract = FileChunkContract.load(offerAcceptedEventResponse.file, web3j, credentials, new DefaultGasProvider());
+                        fileChunkContract.downloadRequestEventFlowable(new EthFilter()).subscribe(new Subscriber<FileChunkContract.DownloadRequestEventResponse>() {
+                            @Override
+                            public void onSubscribe(Subscription s) {
+                            }
+
+                            @Override
+                            public void onNext(FileChunkContract.DownloadRequestEventResponse downloadRequestEventResponse) {
+                                String owner = downloadRequestEventResponse.owner;
+
+                                File foundFile = dataHelper.getAllFiles().stream().filter(file -> file.contract == offerAcceptedEventResponse.file).collect(Collectors.toList()).get(0);
+
+                                FileHelper fileHelper = FileHelper.getInstance();
+                                byte[] chunk = fileHelper.getFileAsChunk(foundFile);
+                                fileChunkContract.share(chunk);
+                            }
+
+                            @Override
+                            public void onError(Throwable t) {
+                            }
+
+                            @Override
+                            public void onComplete() {
+                            }
+                        });
                     }
-                } else if(wsObject.message.type == WSMessageType.ACCEPTED){
-                    //TODO update offer
                 }
             }
         }

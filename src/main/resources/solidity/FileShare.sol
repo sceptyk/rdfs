@@ -15,9 +15,10 @@ contract KillableContract {
 }
 
 contract OfferContract is KillableContract {
-    event OwnerChanged(
+    event OfferAccepted(
         address newOwner,
-        address file
+        address file,
+        bytes fileChunk
     );
 
     bytes fileChunk;
@@ -26,43 +27,36 @@ contract OfferContract is KillableContract {
         fileChunk = _fileChunk;
     }
 
-    function accept() public returns(bytes memory _fileChunk, address file) {
-        _fileChunk = fileChunk;
-        file = address(new FileContract(owner, msg.sender));
-        emit OwnerChanged(msg.sender, file);
+    function accept() public {
+        address fileContract = address(new FileChunkContract(owner, msg.sender));
+        emit OfferAccepted(msg.sender, fileContract, fileChunk);
+
         selfdestruct(msg.sender);
     }
 }
 
-contract FileContract is KillableContract{
-    event NewRequest(address owner);
+contract FileChunkContract {
+    event DownloadRequest(address owner);
+    event DownloadResponse(bytes fileChunk);
+    event CancelSharing();
 
-    address provider;
+    address payable provider;
     address owner;
 
-    constructor(address _owner, address _provider) public{
+    constructor(address _owner, address payable _provider) public{
         owner = _owner;
         provider = _provider;
     }
 
-    function request() public{
-        emit NewRequest(owner);
+    function request() public {
+        emit DownloadRequest(owner);
     }
 
-    function withdraw() public{
-        selfdestruct(msg.sender);
-    }
-}
-
-contract ResponseContract{
-    bytes fileChunk;
-
-    constructor(bytes memory _fileChunk) public{
-        fileChunk = _fileChunk;
+    function share(bytes memory _fileChunk) public {
+        emit DownloadResponse(_fileChunk);
     }
 
-    function retrieve() public returns(bytes memory){
-        selfdestruct(msg.sender);
-        return fileChunk;
+    function cancel() public {
+        selfdestruct(provider);
     }
 }

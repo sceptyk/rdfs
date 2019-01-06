@@ -59,4 +59,9 @@ public class DataHelper implements IDataHelper {
     public void updateSettings(Settings config) {
 
     }
+
+    @Override
+    public void removeFile(File file) {
+
+    }
 }

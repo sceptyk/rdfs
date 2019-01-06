@@ -7,8 +7,9 @@ public class File implements Serializable {
     public String name;
     public String status;
     public String path;
-    public List<Chunk> chunksPaths;
     public String owner;
+    public String contract;
+    public List<String> chunks;
 
     public class Status {
         public static final String SELECTED = "SELECTED";
@@ -17,5 +18,6 @@ public class File implements Serializable {
         public static final String RECEIVED = "RECEIVED";
         public static final String PATCHED = "PATCHED";
         public static final String REMOVED = "REMOVED";
+        public static final String COLLECTABLE = "COLLECTABLE";
     }
 }

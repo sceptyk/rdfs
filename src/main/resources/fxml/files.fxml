@@ -47,13 +47,13 @@
                                  <children>
                                     <Label text="Password" />
                                     <PasswordField />
-                                    <Button mnemonicParsing="false" onAction="#handleConnect" text="Connect" />
+                                    <Button fx:id="connectButton" mnemonicParsing="false" onAction="#handleConnect" text="Connect" />
                                  </children>
                                  <padding>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                  </padding>
                               </HBox>
-                              <CheckBox fx:id="acceptFileCheckBox" layoutX="299.0" layoutY="14.0" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept files" />
+                              <CheckBox fx:id="acceptFilesCheckBox" layoutX="299.0" layoutY="14.0" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept files" />
                            </children>
                         </AnchorPane>
                   </content>

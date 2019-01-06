@@ -12,4 +12,6 @@ public interface IDataHelper {
 
     Settings getSettings();
     void updateSettings(Settings config);
+
+    void removeFile(File file);
 }

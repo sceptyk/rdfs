@@ -21,13 +21,17 @@ public class FileHelper implements IFileHelper {
     }
 
     @Override
-    public List<Offer> splitFile(File file) {
-        List<Offer> offers = new ArrayList<>();
+    public List<byte[]> splitFile(File file) {
+        return null;
+    }
 
-        Offer offer = new Offer();
-        offer.chunk = new byte[]{0, 1, 2};
-        offers.add(offer);
+    @Override
+    public void glueFile(List<byte[]> fileChunks) {
 
-        return offers;
+    }
+
+    @Override
+    public byte[] getFileAsChunk(File foundFile) {
+        return new byte[0];
     }
 }

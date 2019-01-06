@@ -4,7 +4,10 @@ import io.rdfs.model.File;
 
 public interface IEtherHelper {
     void connect();
+    void disconnect();
     void publishOffer(File file) throws Exception;
-    boolean switchFileSubscription();
+    void subscribeToOffers();
+    void unsubscribeToOffers();
     void requestFile(File file);
+    void deleteFile(File file);
 }
