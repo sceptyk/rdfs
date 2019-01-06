@@ -1,13 +1,13 @@
 package io.rdfs.helper;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 
 public interface IEtherHelper {
-    void connect(ConnectionReadySubscriber connectionReadySubscriber);
+    void connect(String password, ConnectionReadySubscriber connectionReadySubscriber);
     void disconnect();
-    void publishOffer(File file) throws Exception;
+    void publishOffer(DistributedFile distributedFile) throws Exception;
     void subscribeToOffers();
     void unsubscribeToOffers();
-    void requestFile(File file);
-    void deleteFile(File file);
+    void requestFile(DistributedFile distributedFile);
+    void deleteFile(DistributedFile distributedFile);
 }

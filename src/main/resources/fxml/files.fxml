@@ -16,13 +16,13 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.rdfs.controller.FilesController">
+<AnchorPane fx:id="rootPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.rdfs.controller.FilesController">
     <children>
         <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <bottom>
                 <HBox alignment="CENTER_RIGHT" prefWidth="600.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Button mnemonicParsing="false" onAction="#handleAddFile" text="Add file" />
+                        <Button mnemonicParsing="false" onAction="#handleAddFile" text="Add distributedFile" />
                     </children>
                     <opaqueInsets>
                         <Insets />
@@ -60,12 +60,12 @@
                                  <children>
                                     <Label text="Password" GridPane.rowIndex="1" />
                                     <Label text="Wallet" />
-                                    <Button mnemonicParsing="false" text="Select file" GridPane.columnIndex="1" />
-                                    <PasswordField GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <Button mnemonicParsing="false" onAction="#onSelectWallet" text="Select distributedFile" GridPane.columnIndex="1" />
+                                    <PasswordField fx:id="walletPasswordField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                     <Button fx:id="connectButton" mnemonicParsing="false" onAction="#handleConnect" text="Connect" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                    <CheckBox fx:id="acceptFilesCheckBox" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept files" GridPane.rowIndex="3" />
+                                    <CheckBox fx:id="acceptFilesCheckBox" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept distributedFiles" GridPane.rowIndex="3" />
                                     <Label text="Download folder" GridPane.rowIndex="2" />
-                                    <Button mnemonicParsing="false" text="Select folder" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Button mnemonicParsing="false" onAction="#onSelectDownload" text="Select folder" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                  </children>
                               </GridPane>
                            </children>

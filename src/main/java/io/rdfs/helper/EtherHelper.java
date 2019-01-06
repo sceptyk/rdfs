@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import io.rdfs.contract.FileChunkContract;
 import io.rdfs.contract.OfferContract;
 import io.rdfs.model.*;
-import io.reactivex.subscribers.SafeSubscriber;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.reactivestreams.Subscriber;
@@ -13,14 +12,11 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.request.EthFilter;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -40,38 +36,36 @@ public class EtherHelper implements IEtherHelper {
     private boolean acceptsFiles;
     private ConnectionReadySubscriber connectionReadySubscriber;
 
-    private EtherHelper() throws IOException, CipherException, URISyntaxException {
+    private EtherHelper() {
         dataHelper = new DataHelper();
         web3j = Web3j.build(new HttpService("http://127.0.0.1:8545"));
-
-        credentials = WalletUtils.loadCredentials(
-                "distributedsystems",
-                "C:\\Users\\c2h6o\\AppData\\Roaming\\Ethereum\\testnet\\keystore\\UTC--2019-01-03T19-28-46.508000000Z--001be8b0a3c6a011a07e1ab75401d0d7900d954e.json");
     }
 
     public static EtherHelper getInstance() {
         if (instance == null) {
-            try {
-                instance = new EtherHelper();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (CipherException e) {
-                e.printStackTrace();
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+            instance = new EtherHelper();
         }
 
         return instance;
     }
 
     @Override
-    public void connect(ConnectionReadySubscriber subscriber) {
+    public void connect(String password, ConnectionReadySubscriber subscriber) {
         try {
+            Settings settings = dataHelper.getSettings();
+
+            credentials = WalletUtils.loadCredentials(
+                    settings.get(Settings.WALLET_PASSWORD),
+                    settings.get(Settings.WALLET_FILE));
+
             connectionReadySubscriber = subscriber;
             ws = new WebSocketClientImpl(new URI("ws://achex.ca:4010"));
             ws.connect();
         } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (CipherException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -82,12 +76,12 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void publishOffer(File file) throws Exception {
+    public void publishOffer(DistributedFile distributedFile) throws Exception {
 
         FileHelper fileHelper = FileHelper.getInstance();
-        List<byte[]> chunks = fileHelper.splitFile(file);
+        List<byte[]> chunks = fileHelper.splitFile(distributedFile);
 
-        for (int i=0;i<chunks.size();i++) {
+        for (int i = 0; i < chunks.size(); i++) {
             byte[] chunk = chunks.get(i);
             OfferContract offerContract = OfferContract
                     .deploy(
@@ -103,22 +97,25 @@ public class EtherHelper implements IEtherHelper {
             int finalI = i;
             offerContract.offerAcceptedEventFlowable(new EthFilter()).safeSubscribe(new Subscriber<OfferContract.OfferAcceptedEventResponse>() {
                 @Override
-                public void onSubscribe(Subscription s) {}
-
-                @Override
-                public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
-                    file.chunks.add(finalI, offerAcceptedEventResponse.file);
-                    dataHelper.updateFile(file);
+                public void onSubscribe(Subscription s) {
                 }
 
                 @Override
-                public void onError(Throwable t) {}
+                public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
+                    distributedFile.chunks.add(finalI, offerAcceptedEventResponse.file);
+                    dataHelper.updateFile(distributedFile);
+                }
 
                 @Override
-                public void onComplete() {}
+                public void onError(Throwable t) {
+                }
+
+                @Override
+                public void onComplete() {
+                }
             });
 
-            dataHelper.updateFile(file);
+            dataHelper.updateFile(distributedFile);
         }
 
         System.out.println("Offer sent");
@@ -135,10 +132,10 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void requestFile(File file) {
+    public void requestFile(DistributedFile distributedFile) {
         List<byte[]> fileChunks = new ArrayList<>();
-        for (int i = 0; i < file.chunks.size(); i++) {
-            String chunkContractAddress = file.chunks.get(i);
+        for (int i = 0; i < distributedFile.chunks.size(); i++) {
+            String chunkContractAddress = distributedFile.chunks.get(i);
             FileChunkContract fileChunkContract =
                     FileChunkContract.load(chunkContractAddress, web3j, credentials, new DefaultGasProvider());
             fileChunkContract.request();
@@ -148,18 +145,18 @@ public class EtherHelper implements IEtherHelper {
         }
 
         FileHelper fileHelper = FileHelper.getInstance();
-        fileHelper.glueFile(fileChunks);
+        fileHelper.glueFile(fileChunks, distributedFile.key);
     }
 
     @Override
-    public void deleteFile(File file) {
-        for (String chunkContractAddress : file.chunks) {
+    public void deleteFile(DistributedFile distributedFile) {
+        for (String chunkContractAddress : distributedFile.chunks) {
             FileChunkContract fileChunkContract =
                     FileChunkContract.load(chunkContractAddress, web3j, credentials, new DefaultGasProvider());
             fileChunkContract.cancel();
         }
 
-        dataHelper.removeFile(file);
+        dataHelper.removeFile(distributedFile);
     }
 
     private class WebSocketClientImpl extends WebSocketClient {
@@ -191,15 +188,15 @@ public class EtherHelper implements IEtherHelper {
                         OfferContract offerContract = OfferContract.load(offer.contract, web3j, credentials, new DefaultGasProvider());
                         offerContract.accept();
 
-                        List<File> files = dataHelper.getAllFiles();
+                        List<DistributedFile> distributedFiles = dataHelper.getAllFiles();
 
                         OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse = offerContract.getOfferAcceptedEvents(offerContract.getTransactionReceipt().get()).get(0);
 
-                        File newFile = new File();
-                        newFile.status = File.Status.COLLECTABLE;
-                        newFile.contract = offerAcceptedEventResponse.file;
+                        DistributedFile newDistributedFile = new DistributedFile();
+                        newDistributedFile.status = DistributedFile.Status.COLLECTABLE;
+                        newDistributedFile.contract = offerAcceptedEventResponse.file;
 
-                        files.add(newFile);
+                        distributedFiles.add(newDistributedFile);
 
                         FileChunkContract fileChunkContract = FileChunkContract.load(offerAcceptedEventResponse.file, web3j, credentials, new DefaultGasProvider());
                         fileChunkContract.downloadRequestEventFlowable(new EthFilter()).subscribe(new Subscriber<FileChunkContract.DownloadRequestEventResponse>() {
@@ -211,10 +208,10 @@ public class EtherHelper implements IEtherHelper {
                             public void onNext(FileChunkContract.DownloadRequestEventResponse downloadRequestEventResponse) {
                                 String owner = downloadRequestEventResponse.owner;
 
-                                File foundFile = dataHelper.getAllFiles().stream().filter(file -> file.contract == offerAcceptedEventResponse.file).collect(Collectors.toList()).get(0);
+                                DistributedFile foundDistributedFile = dataHelper.getAllFiles().stream().filter(file -> file.contract == offerAcceptedEventResponse.file).collect(Collectors.toList()).get(0);
 
                                 FileHelper fileHelper = FileHelper.getInstance();
-                                byte[] chunk = fileHelper.getFileAsChunk(foundFile);
+                                byte[] chunk = fileHelper.getFileAsChunk(foundDistributedFile);
                                 fileChunkContract.share(chunk);
                             }
 
@@ -229,18 +226,21 @@ public class EtherHelper implements IEtherHelper {
 
                         fileChunkContract.cancelSharingEventFlowable(new EthFilter()).subscribe(new Subscriber<FileChunkContract.CancelSharingEventResponse>() {
                             @Override
-                            public void onSubscribe(Subscription s) {}
-
-                            @Override
-                            public void onNext(FileChunkContract.CancelSharingEventResponse cancelSharingEventResponse) {
-                                dataHelper.removeFile(newFile);
+                            public void onSubscribe(Subscription s) {
                             }
 
                             @Override
-                            public void onError(Throwable t) { }
+                            public void onNext(FileChunkContract.CancelSharingEventResponse cancelSharingEventResponse) {
+                                dataHelper.removeFile(newDistributedFile);
+                            }
 
                             @Override
-                            public void onComplete() {}
+                            public void onError(Throwable t) {
+                            }
+
+                            @Override
+                            public void onComplete() {
+                            }
                         });
                     }
                 }
@@ -248,7 +248,8 @@ public class EtherHelper implements IEtherHelper {
         }
 
         @Override
-        public void onClose(int code, String reason, boolean remote) { }
+        public void onClose(int code, String reason, boolean remote) {
+        }
 
         @Override
         public void onError(Exception ex) {

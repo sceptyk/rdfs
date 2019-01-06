@@ -4,7 +4,7 @@ import javax.crypto.SecretKey;
 import java.io.Serializable;
 import java.util.List;
 
-public class File implements Serializable {
+public class DistributedFile implements Serializable {
     public String name;
     public String status;
     public String path;

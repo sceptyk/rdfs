@@ -1,28 +1,32 @@
 package io.rdfs.controller;
 
-import io.rdfs.helper.ConnectionReadySubscriber;
 import io.rdfs.helper.DataHelper;
 import io.rdfs.helper.EtherHelper;
-import io.rdfs.helper.FileHelper;
-import io.rdfs.model.File;
-import io.rdfs.model.Offer;
+import io.rdfs.model.DistributedFile;
+import io.rdfs.model.Settings;
 import io.rdfs.view.FileListCell;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.util.Callback;
+import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class FilesController implements Initializable {
+
+    @FXML
+    private AnchorPane rootPane;
+
+    @FXML
+    private PasswordField walletPasswordField;
 
     @FXML
     private Button connectButton;
@@ -32,7 +36,7 @@ public class FilesController implements Initializable {
     private CheckBox acceptFilesCheckBox;
 
     @FXML
-    private ListView<File> filesList;
+    private ListView<DistributedFile> filesList;
 
     private ObservableList observableList = FXCollections.observableArrayList();
 
@@ -43,9 +47,9 @@ public class FilesController implements Initializable {
 
     private void setListView() {
         DataHelper dataHelper = new DataHelper();
-        List<File> files = dataHelper.getAllFiles();
+        List<DistributedFile> distributedFiles = dataHelper.getAllFiles();
         observableList.clear();
-        observableList.addAll(files);
+        observableList.addAll(distributedFiles);
 
         filesList.setItems(observableList);
         filesList.setCellFactory(param -> new FileListCell());
@@ -54,10 +58,10 @@ public class FilesController implements Initializable {
     @FXML
     public void handleAddFile(ActionEvent actionEvent) {
         EtherHelper etherHelper = EtherHelper.getInstance();
-        File file = new File();
+        DistributedFile distributedFile = new DistributedFile();
 
         try {
-            etherHelper.publishOffer(file);
+            etherHelper.publishOffer(distributedFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,9 +74,12 @@ public class FilesController implements Initializable {
         if(connected){
             etherHelper.disconnect();
             connectButton.setText("Connect");
+            connected = true;
         }else{
-            etherHelper.connect(() -> {
+            String walletPassword = walletPasswordField.getText();
 
+            etherHelper.connect(walletPassword, () -> {
+                connected = true;
             });
             connectButton.setText("Disconnect");
         }
@@ -85,5 +92,25 @@ public class FilesController implements Initializable {
         } else {
             etherHelper.subscribeToOffers();
         }
+    }
+
+    public void onSelectWallet(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select wallet file");
+        File walletFile = fileChooser.showOpenDialog(rootPane.getScene().getWindow());
+
+        DataHelper dataHelper = new DataHelper();
+        Settings settings = dataHelper.getSettings();
+        settings.put(Settings.WALLET_FILE, walletFile.getAbsolutePath());
+    }
+
+    public void onSelectDownload(ActionEvent actionEvent) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Select download folder");
+        File downloadDir = directoryChooser.showDialog(rootPane.getScene().getWindow());
+
+        DataHelper dataHelper = new DataHelper();
+        Settings settings = dataHelper.getSettings();
+        settings.put(Settings.DOWNLOAD_DIR, downloadDir.getAbsolutePath());
     }
 }

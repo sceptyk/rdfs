@@ -1,13 +1,10 @@
 package io.rdfs.helper;
 
-import com.sun.deploy.util.ArrayUtil;
-import io.rdfs.model.File;
-import io.rdfs.model.Offer;
+import io.rdfs.model.DistributedFile;
 import io.rdfs.model.Settings;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,9 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class FileHelper implements IFileHelper {
 
@@ -94,10 +89,10 @@ public class FileHelper implements IFileHelper {
     }
 
     @Override
-    public List<byte[]> splitFile(File file) {
+    public List<byte[]> splitFile(DistributedFile distributedFile) {
         List<byte[]> chunks = new ArrayList<>();
         try {
-            byte[] fileContent = Files.readAllBytes(Paths.get(file.path));
+            byte[] fileContent = Files.readAllBytes(Paths.get(distributedFile.path));
             int from = 0, step = 128*10, to = step;
             SecretKey key = getNewKey();
             while(to < fileContent.length){
@@ -107,9 +102,9 @@ public class FileHelper implements IFileHelper {
                 to = to + step;
             }
 
-            file.key = key;
+            distributedFile.key = key;
             DataHelper dataHelper = new DataHelper();
-            dataHelper.updateFile(file);
+            dataHelper.updateFile(distributedFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -139,10 +134,10 @@ public class FileHelper implements IFileHelper {
     }
 
     @Override
-    public byte[] getFileAsChunk(File foundFile) {
+    public byte[] getFileAsChunk(DistributedFile foundDistributedFile) {
         byte[] fileContent = null;
         try {
-            fileContent = Files.readAllBytes(Paths.get(foundFile.path));
+            fileContent = Files.readAllBytes(Paths.get(foundDistributedFile.path));
         } catch (IOException e) {
             e.printStackTrace();
         }
