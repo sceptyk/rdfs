@@ -15,5 +15,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation "org.slf4j:slf4j-api:1.6.1"
     implementation "org.slf4j:slf4j-simple:1.6.1"
+    implementation 'org.apache.commons:commons-lang3:3.6'
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }

@@ -3,7 +3,7 @@ package io.rdfs.helper;
 import io.rdfs.model.File;
 
 public interface IEtherHelper {
-    void connect();
+    void connect(ConnectionReadySubscriber connectionReadySubscriber);
     void disconnect();
     void publishOffer(File file) throws Exception;
     void subscribeToOffers();

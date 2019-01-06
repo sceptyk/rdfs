@@ -1,5 +1,6 @@
 package io.rdfs.controller;
 
+import io.rdfs.helper.ConnectionReadySubscriber;
 import io.rdfs.helper.DataHelper;
 import io.rdfs.helper.EtherHelper;
 import io.rdfs.helper.FileHelper;
@@ -41,7 +42,7 @@ public class FilesController implements Initializable {
     }
 
     private void setListView() {
-        DataHelper dataHelper = DataHelper.getInstance();
+        DataHelper dataHelper = new DataHelper();
         List<File> files = dataHelper.getAllFiles();
         observableList.clear();
         observableList.addAll(files);
@@ -70,7 +71,9 @@ public class FilesController implements Initializable {
             etherHelper.disconnect();
             connectButton.setText("Connect");
         }else{
-            etherHelper.connect();
+            etherHelper.connect(() -> {
+
+            });
             connectButton.setText("Disconnect");
         }
     }

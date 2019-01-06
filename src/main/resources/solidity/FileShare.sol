@@ -57,6 +57,7 @@ contract FileChunkContract {
     }
 
     function cancel() public {
+        emit CancelSharing();
         selfdestruct(provider);
     }
 }

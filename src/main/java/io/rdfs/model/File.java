@@ -1,5 +1,6 @@
 package io.rdfs.model;
 
+import javax.crypto.SecretKey;
 import java.io.Serializable;
 import java.util.List;
 
@@ -7,9 +8,9 @@ public class File implements Serializable {
     public String name;
     public String status;
     public String path;
-    public String owner;
     public String contract;
     public List<String> chunks;
+    public SecretKey key;
 
     public class Status {
         public static final String SELECTED = "SELECTED";

@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class EtherHelper implements IEtherHelper {
 
     private static EtherHelper instance;
+    private final DataHelper dataHelper;
     private Web3j web3j;
     private WebSocketClient ws;
     private Credentials credentials;
@@ -37,8 +38,10 @@ public class EtherHelper implements IEtherHelper {
 
     private Gson gson = new Gson();
     private boolean acceptsFiles;
+    private ConnectionReadySubscriber connectionReadySubscriber;
 
     private EtherHelper() throws IOException, CipherException, URISyntaxException {
+        dataHelper = new DataHelper();
         web3j = Web3j.build(new HttpService("http://127.0.0.1:8545"));
 
         credentials = WalletUtils.loadCredentials(
@@ -63,8 +66,9 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void connect() {
+    public void connect(ConnectionReadySubscriber subscriber) {
         try {
+            connectionReadySubscriber = subscriber;
             ws = new WebSocketClientImpl(new URI("ws://achex.ca:4010"));
             ws.connect();
         } catch (URISyntaxException e) {
@@ -104,7 +108,6 @@ public class EtherHelper implements IEtherHelper {
                 @Override
                 public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
                     file.chunks.add(finalI, offerAcceptedEventResponse.file);
-                    DataHelper dataHelper = DataHelper.getInstance();
                     dataHelper.updateFile(file);
                 }
 
@@ -115,7 +118,6 @@ public class EtherHelper implements IEtherHelper {
                 public void onComplete() {}
             });
 
-            DataHelper dataHelper = DataHelper.getInstance();
             dataHelper.updateFile(file);
         }
 
@@ -157,7 +159,6 @@ public class EtherHelper implements IEtherHelper {
             fileChunkContract.cancel();
         }
 
-        DataHelper dataHelper = DataHelper.getInstance();
         dataHelper.removeFile(file);
     }
 
@@ -178,7 +179,7 @@ public class EtherHelper implements IEtherHelper {
             System.out.println(message);
 
             if (message == "{\"auth\":\"ok\"}") {
-                //TODO allow sending
+                connectionReadySubscriber.onReady();
             } else {
                 WSObject wsObject = gson.fromJson(message, WSObject.class);
                 if (wsObject.message == null) return;
@@ -190,7 +191,6 @@ public class EtherHelper implements IEtherHelper {
                         OfferContract offerContract = OfferContract.load(offer.contract, web3j, credentials, new DefaultGasProvider());
                         offerContract.accept();
 
-                        DataHelper dataHelper = DataHelper.getInstance();
                         List<File> files = dataHelper.getAllFiles();
 
                         OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse = offerContract.getOfferAcceptedEvents(offerContract.getTransactionReceipt().get()).get(0);
@@ -226,15 +226,29 @@ public class EtherHelper implements IEtherHelper {
                             public void onComplete() {
                             }
                         });
+
+                        fileChunkContract.cancelSharingEventFlowable(new EthFilter()).subscribe(new Subscriber<FileChunkContract.CancelSharingEventResponse>() {
+                            @Override
+                            public void onSubscribe(Subscription s) {}
+
+                            @Override
+                            public void onNext(FileChunkContract.CancelSharingEventResponse cancelSharingEventResponse) {
+                                dataHelper.removeFile(newFile);
+                            }
+
+                            @Override
+                            public void onError(Throwable t) { }
+
+                            @Override
+                            public void onComplete() {}
+                        });
                     }
                 }
             }
         }
 
         @Override
-        public void onClose(int code, String reason, boolean remote) {
-
-        }
+        public void onClose(int code, String reason, boolean remote) { }
 
         @Override
         public void onError(Exception ex) {
