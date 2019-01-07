@@ -1,7 +1,14 @@
 package io.rdfs.helper;
 
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
+
+import javax.crypto.SecretKey;
+import java.util.List;
 
 public interface IFileHelper {
-    void splitFile(File file);
+    List<byte[]> splitFile(DistributedFile distributedFile);
+    void glueFile(List<byte[]> fileChunks, SecretKey key);
+
+    byte[] getFileAsChunk(DistributedFile foundDistributedFile);
+    DistributedFile saveFileChunk(byte[] chunk, String contract);
 }

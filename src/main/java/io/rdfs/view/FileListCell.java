@@ -1,20 +1,20 @@
 package io.rdfs.view;
 
 import io.rdfs.controller.FileController;
-import io.rdfs.model.File;
+import io.rdfs.model.DistributedFile;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.ListCell;
 
 import java.io.IOException;
 
-public class FileListCell extends ListCell<File> {
+public class FileListCell extends ListCell<DistributedFile> {
 
     private FileController controller;
     private Parent root;
 
     public FileListCell() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/../resources/view/file.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/file.fxml"));
         try {
             root = loader.load();
             controller = (FileController) loader.getController();
@@ -24,7 +24,7 @@ public class FileListCell extends ListCell<File> {
     }
 
     @Override
-    protected void updateItem(File item, boolean empty) {
+    protected void updateItem(DistributedFile item, boolean empty) {
         super.updateItem(item, empty);
 
         if(item != null) {
