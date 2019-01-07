@@ -10,4 +10,5 @@ public interface IFileHelper {
     void glueFile(List<byte[]> fileChunks, SecretKey key);
 
     byte[] getFileAsChunk(DistributedFile foundDistributedFile);
+    DistributedFile saveFileChunk(byte[] chunk, String contract);
 }

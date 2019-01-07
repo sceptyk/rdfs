@@ -5,6 +5,7 @@ import io.rdfs.model.Settings;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.crypto.*;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,8 +21,11 @@ import java.util.List;
 public class FileHelper implements IFileHelper {
 
     private static FileHelper instance;
+    private DataHelper dataHelper;
 
-    private FileHelper(){}
+    private FileHelper(){
+        dataHelper = DataHelper.getInstance();
+    }
 
     public static FileHelper getInstance(){
         if(instance == null) {
@@ -36,8 +40,7 @@ public class FileHelper implements IFileHelper {
         try {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
             SecureRandom secureRandom = new SecureRandom();
-            int keyBitSize = 256;
-            keyGenerator.init(keyBitSize, secureRandom);
+            keyGenerator.init(128, secureRandom);
             key = keyGenerator.generateKey();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -49,7 +52,7 @@ public class FileHelper implements IFileHelper {
     private byte[] encrypt(byte[] plain, SecretKey key){
         byte[] encrypted = null;
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             encrypted = cipher.doFinal(plain);
         } catch (NoSuchAlgorithmException e) {
@@ -70,7 +73,7 @@ public class FileHelper implements IFileHelper {
     private byte[] decrypt(byte[] encrypted, SecretKey key){
         byte[] decrypted = null;
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, key);
             decrypted = cipher.doFinal(encrypted);
         } catch (NoSuchAlgorithmException e) {
@@ -103,7 +106,7 @@ public class FileHelper implements IFileHelper {
             }
 
             distributedFile.key = key;
-            DataHelper dataHelper = new DataHelper();
+            distributedFile.status = DistributedFile.Status.UPLOADING;
             dataHelper.updateFile(distributedFile);
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,7 +117,6 @@ public class FileHelper implements IFileHelper {
 
     @Override
     public void glueFile(List<byte[]> fileChunks, SecretKey key) {
-        DataHelper dataHelper = new DataHelper();
         Settings settings = dataHelper.getSettings();
 
         byte[] fileContent = new byte[]{};
@@ -143,5 +145,28 @@ public class FileHelper implements IFileHelper {
         }
 
         return fileContent;
+    }
+
+    @Override
+    public DistributedFile saveFileChunk(byte[] chunk, String contract) {
+        Settings settings = dataHelper.getSettings();
+        DistributedFile distributedFile = null;
+        try {
+            String path = Settings.DOWNLOAD_DIR + File.pathSeparator + contract + ".bin";
+            FileOutputStream fos = new FileOutputStream(new File(settings.get(path)));
+            fos.write(chunk);
+
+            distributedFile = new DistributedFile();
+            distributedFile.contract = contract;
+            distributedFile.path = path;
+            distributedFile.status = DistributedFile.Status.COLLECTABLE;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return distributedFile;
     }
 }

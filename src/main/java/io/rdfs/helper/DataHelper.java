@@ -48,13 +48,18 @@ public class DataHelper implements IDataHelper {
     @Override
     public void updateFile(DistributedFile distributedFile) {
         List<DistributedFile> distributedFiles = getAllFiles();
+        boolean fileUpdated = false;
         for (int i = 0; i < distributedFiles.size(); i++) {
             DistributedFile oldDistributedFile = distributedFiles.get(i);
             if (oldDistributedFile.contract == distributedFile.contract) {
                 distributedFiles.set(i, distributedFile);
+                fileUpdated = true;
                 break;
             }
         }
+
+        if(!fileUpdated) distributedFiles.add(distributedFile);
+
         updateAllFiles(distributedFiles);
     }
 

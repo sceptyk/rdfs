@@ -13,12 +13,9 @@ public class DistributedFile implements Serializable {
     public SecretKey key;
 
     public class Status {
-        public static final String SELECTED = "SELECTED";
-        public static final String CHOPPED = "CHOPPED";
-        public static final String DISTRIBUTED = "DISTRIBUTED";
-        public static final String RECEIVED = "RECEIVED";
-        public static final String PATCHED = "PATCHED";
-        public static final String REMOVED = "REMOVED";
+        public static final String UPLOADING = "UPLOADING";
         public static final String COLLECTABLE = "COLLECTABLE";
+        public static final String UPLOADED = "UPLOADED";
+        public static final String FAILED = "FAILED";
     }
 }

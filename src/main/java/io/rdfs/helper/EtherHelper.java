@@ -37,7 +37,7 @@ public class EtherHelper implements IEtherHelper {
     private ConnectionReadySubscriber connectionReadySubscriber;
 
     private EtherHelper() {
-        dataHelper = new DataHelper();
+        dataHelper = DataHelper.getInstance();
         web3j = Web3j.build(new HttpService("http://127.0.0.1:8545"));
     }
 
@@ -57,6 +57,7 @@ public class EtherHelper implements IEtherHelper {
 
             credentials = WalletUtils.loadCredentials(password, wallet);
 
+            WSObject.SENDER = address;
             ws = new WebSocketClientImpl(new URI("ws://achex.ca:4010"));
             ws.connect();
         } catch (URISyntaxException e) {
@@ -76,37 +77,53 @@ public class EtherHelper implements IEtherHelper {
     }
 
     @Override
-    public void publishOffer(DistributedFile distributedFile) throws Exception {
+    public void publishOffer(DistributedFile distributedFile){
 
         FileHelper fileHelper = FileHelper.getInstance();
         List<byte[]> chunks = fileHelper.splitFile(distributedFile);
 
-        for (int i = 0; i < chunks.size(); i++) {
-            byte[] chunk = chunks.get(i);
-            OfferContract offerContract = OfferContract
-                    .deploy(
-                            web3j,
-                            credentials,
-                            new DefaultGasProvider(),
-                            chunk
-                    )
-                    .send();
+        dataHelper.updateFile(distributedFile);
 
-            ws.send(WSObject.createMessage(new WSMessage(WSMessageType.NEW_FILE, offerContract.getContractAddress())));
+        for (int i = 0; i < chunks.size(); i++) {
 
             int finalI = i;
-            offerContract.offerAcceptedEventFlowable(new EthFilter()).safeSubscribe(new EthNextEventListener<OfferContract.OfferAcceptedEventResponse>() {
-                @Override
-                public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
-                    distributedFile.chunks.add(finalI, offerAcceptedEventResponse.file);
+            final int[] countAccepted = {0}; //multi thread integer
+            int countSend = chunks.size();
+            new Thread(() -> {
+                byte[] chunk = chunks.get(finalI);
+                OfferContract offerContract = null;
+                try {
+                    offerContract = OfferContract
+                            .deploy(
+                                    web3j,
+                                    credentials,
+                                    new DefaultGasProvider(),
+                                    chunk
+                            )
+                            .send();
+
+                    ws.send(WSObject.createMessage(new WSMessage(WSMessageType.NEW_FILE, offerContract.getContractAddress())));
+
+                    System.out.println("Offer sent");
+
+                    offerContract.offerAcceptedEventFlowable(new EthFilter()).safeSubscribe(new EthNextEventListener<OfferContract.OfferAcceptedEventResponse>() {
+                        @Override
+                        public void onNext(OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse) {
+                            distributedFile.chunks.add(finalI, offerAcceptedEventResponse.file);
+                            countAccepted[0]++;
+                            if(countAccepted[0] == countSend)
+                                distributedFile.status = DistributedFile.Status.UPLOADED;
+                            dataHelper.updateFile(distributedFile);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    distributedFile.status = DistributedFile.Status.FAILED;
                     dataHelper.updateFile(distributedFile);
                 }
-            });
+            }).start();
 
-            dataHelper.updateFile(distributedFile);
         }
-
-        System.out.println("Offer sent");
     }
 
     @Override
@@ -138,6 +155,7 @@ public class EtherHelper implements IEtherHelper {
 
     @Override
     public void deleteFile(DistributedFile distributedFile) {
+        if(distributedFile.chunks != null)
         for (String chunkContractAddress : distributedFile.chunks) {
             FileChunkContract fileChunkContract =
                     FileChunkContract.load(chunkContractAddress, web3j, credentials, new DefaultGasProvider());
@@ -168,7 +186,7 @@ public class EtherHelper implements IEtherHelper {
             } else {
                 WSObject wsObject = gson.fromJson(message, WSObject.class);
                 if (wsObject.message == null) return;
-                //TODO disable self messages
+                //if (wsObject.sender == address) return;
 
                 if (wsObject.message.type == WSMessageType.NEW_FILE) {
                     if (acceptsFiles) {
@@ -181,9 +199,8 @@ public class EtherHelper implements IEtherHelper {
 
                         OfferContract.OfferAcceptedEventResponse offerAcceptedEventResponse = offerContract.getOfferAcceptedEvents(offerContract.getTransactionReceipt().get()).get(0);
 
-                        DistributedFile newDistributedFile = new DistributedFile();
-                        newDistributedFile.status = DistributedFile.Status.COLLECTABLE;
-                        newDistributedFile.contract = offerAcceptedEventResponse.file;
+                        FileHelper fileHelper = FileHelper.getInstance();
+                        DistributedFile newDistributedFile = fileHelper.saveFileChunk(offerAcceptedEventResponse.fileChunk, offerAcceptedEventResponse.file);
 
                         distributedFiles.add(newDistributedFile);
 
@@ -191,8 +208,6 @@ public class EtherHelper implements IEtherHelper {
                         fileChunkContract.downloadRequestEventFlowable(new EthFilter()).subscribe(new EthNextEventListener<FileChunkContract.DownloadRequestEventResponse>() {
                             @Override
                             public void onNext(FileChunkContract.DownloadRequestEventResponse downloadRequestEventResponse) {
-                                String owner = downloadRequestEventResponse.owner;
-
                                 DistributedFile foundDistributedFile = dataHelper.getAllFiles().stream().filter(file -> file.contract == offerAcceptedEventResponse.file).collect(Collectors.toList()).get(0);
 
                                 FileHelper fileHelper = FileHelper.getInstance();
