@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
@@ -16,65 +17,87 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane fx:id="rootPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.rdfs.controller.FilesController">
+<AnchorPane fx:id="rootPane" prefHeight="800.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.rdfs.controller.FilesController">
     <children>
-        <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-            <bottom>
-                <HBox alignment="CENTER_RIGHT" prefWidth="600.0" BorderPane.alignment="CENTER">
-                    <children>
-                        <Button mnemonicParsing="false" onAction="#handleAddFile" text="Add distributedFile" />
-                    </children>
-                    <opaqueInsets>
-                        <Insets />
-                    </opaqueInsets>
-                    <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                    </padding>
-                </HBox>
-            </bottom>
-            <center>
-                <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
-                    <children>
-                        <ListView fx:id="filesList" />
-                    </children>
-                </VBox>
-            </center>
-         <top>
-            <Accordion BorderPane.alignment="CENTER">
-              <panes>
-                <TitledPane animated="false" text="Settings">
-                  <content>
-                    <AnchorPane minHeight="0.0" minWidth="0.0">
+      <Accordion fx:id="accordionWrapper" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <panes>
+          <TitledPane fx:id="settingsPane" animated="false" text="Settings">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0">
+                     <children>
+                        <GridPane alignment="CENTER" hgap="10.0" vgap="5.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
                            <children>
-                              <GridPane alignment="CENTER" hgap="10.0" vgap="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                <columnConstraints>
-                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                </columnConstraints>
-                                <rowConstraints>
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                </rowConstraints>
+                              <Label text="Password" GridPane.rowIndex="2" />
+                              <Label text="Wallet" GridPane.rowIndex="1" />
+                              <PasswordField fx:id="walletPasswordField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              <Button fx:id="connectButton" mnemonicParsing="false" onAction="#handleConnect" text="Connect" textFill="RED" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                              <CheckBox fx:id="acceptFilesCheckBox" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept files" GridPane.rowIndex="4" />
+                              <Label text="Download folder" GridPane.rowIndex="3" />
+                              <Label text="Address" />
+                              <TextField fx:id="blockchainAddressTextField" GridPane.columnIndex="1" />
+                              <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                  <children>
-                                    <Label text="Password" GridPane.rowIndex="1" />
-                                    <Label text="Wallet" />
-                                    <Button mnemonicParsing="false" onAction="#onSelectWallet" text="Select distributedFile" GridPane.columnIndex="1" />
-                                    <PasswordField fx:id="walletPasswordField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <Button fx:id="connectButton" mnemonicParsing="false" onAction="#handleConnect" text="Connect" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                    <CheckBox fx:id="acceptFilesCheckBox" mnemonicParsing="false" onAction="#handleAcceptFiles" text="Accept distributedFiles" GridPane.rowIndex="3" />
-                                    <Label text="Download folder" GridPane.rowIndex="2" />
-                                    <Button mnemonicParsing="false" onAction="#onSelectDownload" text="Select folder" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Button mnemonicParsing="false" onAction="#onSelectWallet" text="Select file" />
+                                    <Label fx:id="walletFilePreview" />
                                  </children>
-                              </GridPane>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                 <children>
+                                    <Button mnemonicParsing="false" onAction="#onSelectDownload" text="Select folder" />
+                                    <Label fx:id="downloadFolderPreview" />
+                                 </children>
+                              </HBox>
                            </children>
-                        </AnchorPane>
-                  </content>
-                </TitledPane>
-              </panes>
-            </Accordion>
-         </top>
-        </BorderPane>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </GridPane>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </TitledPane>
+            <TitledPane fx:id="filesPane" animated="false" expanded="false" text="Files">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <BorderPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-2.0" AnchorPane.topAnchor="0.0">
+                           <center>
+                                  <VBox BorderPane.alignment="CENTER">
+                                      <children>
+                                          <ListView fx:id="filesList" />
+                                      </children>
+                                  </VBox>
+                           </center>
+                           <bottom>
+                                  <HBox alignment="CENTER_RIGHT" prefWidth="600.0" BorderPane.alignment="CENTER">
+                                      <children>
+                                          <Button mnemonicParsing="false" onAction="#handleAddFile" text="Upload file" />
+                                      </children>
+                                      <opaqueInsets>
+                                          <Insets />
+                                      </opaqueInsets>
+                                      <padding>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                      </padding>
+                                  </HBox>
+                           </bottom>
+                        </BorderPane>
+                     </children>
+                  </AnchorPane>
+              </content>
+            </TitledPane>
+        </panes>
+      </Accordion>
     </children>
 </AnchorPane>

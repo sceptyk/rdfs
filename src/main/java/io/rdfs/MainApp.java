@@ -20,7 +20,7 @@ public class MainApp extends Application {
         Parent root = (Parent)loader.load();
 
         primaryStage.setScene(new Scene(root));
-        primaryStage.setTitle("Randomly Distributed DistributedFile System");
+        primaryStage.setTitle("Randomly Distributed File System");
         primaryStage.show();
     }
 }
